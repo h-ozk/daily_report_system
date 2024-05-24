@@ -17,16 +17,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/*
+/**
  * 従業員データのDTOモデル
  */
 @Table(name = JpaConst.TABLE_EMP)
 @NamedQueries({
     @NamedQuery(
-            name = JpaConst.Q_EMP_COUNT,
+            name = JpaConst.Q_EMP_GET_ALL,
             query = JpaConst.Q_EMP_GET_ALL_DEF),
     @NamedQuery(
-            name = JpaConst.Q_EMP_GET_ALL,
+            name = JpaConst.Q_EMP_COUNT,
             query = JpaConst.Q_EMP_COUNT_DEF),
     @NamedQuery(
             name = JpaConst.Q_EMP_COUNT_REGISTERED_BY_CODE,
@@ -42,7 +42,7 @@ import lombok.Setter;
 @Entity
 
 public class Employee {
-    /*
+    /**
      * id
      */
     @Id
@@ -50,22 +50,22 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    /*
+    /**
      * 社員番号
      */
     @Column(name = JpaConst.EMP_COL_CODE, nullable = false, unique = true)
     private String code;
 
-    /*
+    /**
      * 氏名
      */
     @Column(name = JpaConst.EMP_COL_NAME, nullable = false)
     private String name;
 
-    /*
+    /**
      * パスワード
      */
-    @Column(name = JpaConst.EMP_COL_NAME, nullable = false)
+    @Column(name = JpaConst.EMP_COL_PASS, length = 64, nullable = false)
     private String password;
 
     /**

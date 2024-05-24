@@ -11,29 +11,22 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-/**
- * Application Lifecycle Listener implementation class PropertiesListener
- *
- */
 @WebListener
 public class PropertiesListener implements ServletContextListener {
 
-    /**
-     * Default constructor.
-     */
     public PropertiesListener() {
     }
 
     /**
-     * @see ServletContextListener#contextDestroyed(ServletContextEvent)
+     * Webアプリケーションのシャットダウン時に実行する処理
      */
-    public void contextDestroyed(ServletContextEvent sce)  {
+    public void contextDestroyed(ServletContextEvent arg0) {
     }
 
     /**
-     * @see ServletContextListener#contextInitialized(ServletContextEvent)
+     * Webアプリケーションの起動時に実行する処理
      */
-    public void contextInitialized(ServletContextEvent arg0)  {
+    public void contextInitialized(ServletContextEvent arg0) {
         ServletContext context = arg0.getServletContext();
 
         //プロパティファイルを読み込み、アプリケーションスコープに設定する
