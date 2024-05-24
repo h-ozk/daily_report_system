@@ -15,7 +15,7 @@
     </div>
 </c:if>
 <label for="${AttributeConst.EMP_CODE.getValue()}">社員番号</label><br/>
-<input type="text" name="${AttributeConst.EMP_CODE.getValue()}" id="${AttributeConst.EMP_CODE.getValue()}" value="${employee.code}"} />
+<input type="text" name="${AttributeConst.EMP_CODE.getValue()}" id="${AttributeConst.EMP_CODE.getValue()}" value="${employee.code}" />
 <br/><br/>
 
 <label for="${AttributeConst.EMP_NAME.getValue()}">氏名</label><br/>
@@ -24,7 +24,7 @@
 
 <label for="${AttributeConst.EMP_NAME.getValue()}">パスワード</label><br/>
 <input type="password" name="${AttributeConst.EMP_PASS.getValue()}" id="${AttributeConst.EMP_PASS.getValue()}" />
-<bt/><br/>
+<br/><br/>
 
 <label for="${AttributeConst.EMP_ADMIN_FLG.getValue()}">権限</label><br />
 <select name="${AttributeConst.EMP_ADMIN_FLG.getValue()}" id="${AttributeConst.EMP_ADMIN_FLG.getValue()}">
