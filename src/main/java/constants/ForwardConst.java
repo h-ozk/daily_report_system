@@ -27,6 +27,9 @@ public enum ForwardConst {
     CMD_UPDATE("update"),
     CMD_DESTROY("destroy"),
 
+    CMD_GOOD_REACTION("goodReaction"),
+    CMD_BAD_REACTION("badReaction"),
+
     //jsp
     FW_ERR_UNKNOWN("error/unknown"),
     FW_TOP_INDEX("topPage/index"),

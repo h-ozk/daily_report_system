@@ -40,14 +40,32 @@ public interface JpaConst {
     String REP_COL_CREATED_AT = "created_at"; //登録日時
     String REP_COL_UPDATED_AT = "updated_at"; //更新日時
 
+    //リアクションテーブル
+    String TABLE_RXN = "reactions"; //テーブル名
+    //リアクションテーブルカラム
+    String RXN_COL_ID = "id"; //id
+    String RXN_COL_EMP = "employee_id"; //リアクションした従業員のid
+    String RXN_COL_REP = "report_id"; //リアクションされた日報のid
+    String RXN_COL_TYPE = "type"; //リアクションの種類
+
+    int RXN_TYPE_GOOD = 0; //リアクションタイプ：いいね
+    int RXN_TYPE_BAD = 1; //リアクションタイプ：要修正
+
     //Entity名
     String ENTITY_EMP = "employee"; //従業員
     String ENTITY_REP = "report"; //日報
+
+    String ENTITY_RXN = "reaction"; //リアクション
 
     //JPQL内パラメータ
     String JPQL_PARM_CODE = "code"; //社員番号
     String JPQL_PARM_PASSWORD = "password"; //パスワード
     String JPQL_PARM_EMPLOYEE = "employee"; //従業員
+
+    String JPQL_PARM_REACTION = "reaction"; //リアクション
+    String JPQL_PARM_EMPLOYEE_ID = "employee_id"; //社員テーブルのid
+    String JPQL_PARM_REPORT_ID = "report_id"; //日報テーブルのid
+    String JPQL_PARM_TYPE = "type"; //日報テーブルのリアクションタイプ
 
     //NamedQueryの nameとquery
     //全ての従業員をidの降順に取得する
@@ -75,4 +93,10 @@ public interface JpaConst {
     String Q_REP_COUNT_ALL_MINE = ENTITY_REP + ".countAllMine";
     String Q_REP_COUNT_ALL_MINE_DEF = "SELECT COUNT(r) FROM Report AS r WHERE r.employee = :" + JPQL_PARM_EMPLOYEE;
 
+    //指定した日報の指定したリアクションの件数を取得する
+    String Q_RXN_COUNT_REACTION = ENTITY_RXN + ".countReactionByCode" ;
+    String Q_RXN_COUNT_REACTION_DEF = "SELECT COUNT(x) FROM Reaction AS x WHERE x.reportId = :" + JPQL_PARM_REPORT_ID + " AND x.type = :" + JPQL_PARM_TYPE;
+    //指定した従業員、日報からリアクションデータを1件取得する
+    String Q_RXN_GET_BY_EMPLOYEE_AND_REPORT = ENTITY_RXN + ".getTypeById";
+    String Q_RXN_GET_BY_EMPLOYEE_AND_REPORT_DEF = "SELECT x FROM Reaction AS x WHERE x.employeeId = :" + JPQL_PARM_EMPLOYEE_ID + " AND x.reportId = :" + JPQL_PARM_REPORT_ID;
 }

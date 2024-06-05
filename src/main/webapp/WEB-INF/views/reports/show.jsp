@@ -6,6 +6,8 @@
 <c:set var="actRep" value="${ForwardConst.ACT_REP.getValue()}" />
 <c:set var="commIdx" value="${ForwardConst.CMD_INDEX.getValue()}" />
 <c:set var="commEdt" value="${ForwardConst.CMD_EDIT.getValue()}" />
+<c:set var="commGRxn" value="${ForwardConst.CMD_GOOD_REACTION.getValue()}" />
+<c:set var="commBRxn" value="${ForwardConst.CMD_BAD_REACTION.getValue()}" />
 
 <c:import url="/WEB-INF/views/layout/app.jsp">
     <c:param name="content">
@@ -39,6 +41,32 @@
                 </tr>
             </tbody>
         </table>
+
+        <c:choose>
+            <c:when test="${sessionScope.login_employee.id != report.employee.id}">
+
+                <c:choose>
+                    <c:when test="${already == 0}">
+                        <a href="<c:url value='?action=${actRep}&command=${commGRxn}&id=${report.id}' />">いいね解除（<c:out value="${good}" />）</a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="<c:url value='?action=${actRep}&command=${commGRxn}&id=${report.id}' />">いいね（<c:out value="${good}" />）</a>
+                    </c:otherwise>
+                </c:choose>
+                <c:choose>
+                    <c:when test="${already == 1}">
+                        <a href="<c:url value='?action=${actRep}&command=${commBRxn}&id=${report.id}' />">要修正解除（<c:out value="${bad}" />）</a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="<c:url value='?action=${actRep}&command=${commBRxn}&id=${report.id}' />">要修正（<c:out value="${bad}" />）</a>
+                    </c:otherwise>
+                </c:choose>
+
+            </c:when>
+            <c:otherwise>
+                <p>いいね（<c:out value="${good}" />）要修正（<c:out value="${bad}" />）</p>
+            </c:otherwise>
+        </c:choose>
 
         <c:if test="${sessionScope.login_employee.id == report.employee.id}">
             <p>

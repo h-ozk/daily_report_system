@@ -12,6 +12,8 @@ import constants.AttributeConst;
 import constants.ForwardConst;
 import constants.JpaConst;
 import constants.MessageConst;
+import models.Reaction;
+import services.ReactionService;
 import services.ReportService;
 
 /**
@@ -21,6 +23,7 @@ import services.ReportService;
 public class ReportAction extends ActionBase{
 
     private ReportService service;
+    private ReactionService xService;
 
     /**
      * メソッドを実行する
@@ -28,9 +31,11 @@ public class ReportAction extends ActionBase{
     @Override
     public void process() throws ServletException, IOException{
         service = new ReportService();
+        xService = new ReactionService();
 
         //メソッドを実行
         invoke();
+        xService.close();
         service.close();
     }
 
@@ -39,7 +44,10 @@ public class ReportAction extends ActionBase{
      * @throws ServletException
      * @throws IOException
      */
-    public void index() throws ServletException, IOException{
+    public void index() throws ServletException, IOException {
+
+        removeSessionScope(AttributeConst.RXN_REP_ID);
+
         //指定されたページ数の一覧画面に表示する日報データを取得
         int page = getPage();
         List<ReportView> reports = service.getAllPerPage(page);
@@ -47,8 +55,8 @@ public class ReportAction extends ActionBase{
         //全日報データの件数を取得
         long reportsCount = service.countAll();
 
-        putRequestScope(AttributeConst.REPORTS, reports);   //取得した日報データ
-        putRequestScope(AttributeConst.REP_COUNT, reportsCount);    //全ての日報データの件数
+        putRequestScope(AttributeConst.REPORTS, reports); //取得した日報データ
+        putRequestScope(AttributeConst.REP_COUNT, reportsCount); //全ての日報データの件数
         putRequestScope(AttributeConst.PAGE, page); //ページ数
         putRequestScope(AttributeConst.MAX_ROW, JpaConst.ROW_PER_PAGE); //1ページに表示するレコードの数
 
@@ -68,9 +76,9 @@ public class ReportAction extends ActionBase{
      * @throws ServletException
      * @throws IOException
      */
-    public void entryNew() throws ServletException, IOException{
+    public void entryNew() throws ServletException, IOException {
 
-        putRequestScope(AttributeConst.TOKEN, getTokenId());    //CSRF対策用トークン
+        putRequestScope(AttributeConst.TOKEN, getTokenId()); //CSRF対策用トークン
 
         //日報情報の空インスタンスに、日報の日付＝今日の日付を設定する
         ReportView rv = new ReportView();
@@ -86,24 +94,24 @@ public class ReportAction extends ActionBase{
      * @throws ServletException
      * @throws IOException
      */
-    public void create() throws ServletException, IOException{
+    public void create() throws ServletException, IOException {
 
-        //CSRF対策tokenのチェック
-        if(checkToken()) {
+        //CSRF対策 tokenのチェック
+        if (checkToken()) {
 
             //日報の日付が入力されていなければ、今日の日付を設定
             LocalDate day = null;
-            if(getRequestParam(AttributeConst.REP_DATE) == null
+            if (getRequestParam(AttributeConst.REP_DATE) == null
                     || getRequestParam(AttributeConst.REP_DATE).equals("")) {
                 day = LocalDate.now();
-            }else {
+            } else {
                 day = LocalDate.parse(getRequestParam(AttributeConst.REP_DATE));
             }
 
             //セッションからログイン中の従業員情報を取得
             EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
 
-            //パラメータの値を元に日報情報のインスタンスを作成する
+            //パラメータの値をもとに日報情報のインスタンスを作成する
             ReportView rv = new ReportView(
                     null,
                     ev, //ログインしている従業員を、日報作成者として登録する
@@ -116,17 +124,18 @@ public class ReportAction extends ActionBase{
             //日報情報登録
             List<String> errors = service.create(rv);
 
-            if(errors.size() > 0) {
+            if (errors.size() > 0) {
                 //登録中にエラーがあった場合
 
-                putRequestScope(AttributeConst.TOKEN, getTokenId());    //CSRF対策用トークン
-                putRequestScope(AttributeConst.REPORT, rv); //入力された日報情報
-                putRequestScope(AttributeConst.ERR, errors);    //エラーのリスト
+                putRequestScope(AttributeConst.TOKEN, getTokenId()); //CSRF対策用トークン
+                putRequestScope(AttributeConst.REPORT, rv);//入力された日報情報
+                putRequestScope(AttributeConst.ERR, errors);//エラーのリスト
 
                 //新規登録画面を再表示
                 forward(ForwardConst.FW_REP_NEW);
-            }else {
-                //登録中にエラーが無かった場合
+
+            } else {
+                //登録中にエラーがなかった場合
 
                 //セッションに登録完了のフラッシュメッセージを設定
                 putSessionScope(AttributeConst.FLUSH, MessageConst.I_REGISTERED.getMessage());
@@ -144,13 +153,33 @@ public class ReportAction extends ActionBase{
      */
     public void show() throws ServletException, IOException{
         //idを条件に日報データを取得する
-        ReportView rv = service.findOne(toNumber(getRequestParam(AttributeConst.REP_ID)));
+        int employee_id = toNumber(getRequestParam(AttributeConst.REP_ID));
+        String sEmpId = getRequestParam(AttributeConst.RXN_REP_ID);
+        if(sEmpId != null) {
+            employee_id = toNumber(sEmpId);
+        }
+        ReportView rv = service.findOne(employee_id);
 
         if(rv == null) {
             //該当の日報データが存在しないはエラー画面を表示
             forward(ForwardConst.FW_ERR_UNKNOWN);
         }else {
             putRequestScope(AttributeConst.REPORT, rv); //取得した日報データ
+
+            //リアクション数をカウント
+            long good = xService.countReaction(toNumber(getRequestParam(AttributeConst.REP_ID)), AttributeConst.RXN_TYPE_GOOD.getIntegerValue());
+            long bad = xService.countReaction(toNumber(getRequestParam(AttributeConst.REP_ID)), AttributeConst.RXN_TYPE_BAD.getIntegerValue());
+            putRequestScope(AttributeConst.RXN_GOOD, good);
+            putRequestScope(AttributeConst.RXN_BAD, bad);
+
+            //セッションからログイン中の従業員情報を取得
+            EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+
+            //2つのidからリアクション情報を取得し、既に行ったリアクションがあれば送信
+            Reaction x = xService.findOne(ev.getId(), rv.getId());
+            if(x != null){
+              putRequestScope(AttributeConst.RXN_ALREADY, x.getType());
+            }
 
             //詳細画面を表示
             forward(ForwardConst.FW_REP_SHOW);
@@ -173,7 +202,7 @@ public class ReportAction extends ActionBase{
             //該当の日報データが存在しない、又はログインしている従業員が日報の作成者でない場合はエラー画面を表示
             forward(ForwardConst.FW_ERR_UNKNOWN);
         }else {
-            putRequestScope(AttributeConst.TOKEN, getTokenId());    //CSRF対策用トークン
+            putRequestScope(AttributeConst.TOKEN, getTokenId()); //CSRF対策用トークン
             putRequestScope(AttributeConst.REPORT, rv); //取得した日報データ
 
             //編集画面を表示
@@ -219,5 +248,91 @@ public class ReportAction extends ActionBase{
                 redirect(ForwardConst.ACT_REP, ForwardConst.CMD_INDEX);
             }
         }
+    }
+
+    public void goodReaction() throws ServletException, IOException{
+        //セッションからログイン中の従業員情報を取得
+        EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+        int employee_id = ev.getId();
+        int report_id = toNumber(getRequestParam(AttributeConst.REP_ID));
+
+        //リアクションされた日報のidをセッションに設定
+        putSessionScope(AttributeConst.RXN_REP_ID, report_id);
+
+        //2つのidからリアクション情報を取得する
+        Reaction x = xService.findOne(employee_id, report_id);
+
+        //もし既にリアクションしていたら
+        if(x != null) {
+            //もし既に行ったリアクションが同一なら
+            if(x.getType() == AttributeConst.RXN_TYPE_GOOD.getIntegerValue()) {
+                destroyReaction(x);
+            }else {
+                updateReaction(x, AttributeConst.RXN_TYPE_GOOD.getIntegerValue());
+            }
+
+        } else {
+            createReaction(employee_id, report_id, AttributeConst.RXN_TYPE_GOOD.getIntegerValue());
+        }
+    }
+
+    public void badReaction() throws ServletException, IOException{
+        //セッションからログイン中の従業員情報を取得
+        EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+        int employee_id = ev.getId();
+        int report_id = toNumber(getRequestParam(AttributeConst.REP_ID));
+
+        //リアクションされた日報のidをセッションに設定
+        putSessionScope(AttributeConst.RXN_REP_ID, report_id);
+
+        //2つのidからリアクション情報を取得する
+        Reaction x = xService.findOne(employee_id, report_id);
+
+        //もし既にリアクションしていたら
+        if(x != null) {
+            //もし既に行ったリアクションが同一なら
+            if(x.getType() == AttributeConst.RXN_TYPE_BAD.getIntegerValue()) {
+                destroyReaction(x);
+            }else {
+                updateReaction(x, AttributeConst.RXN_TYPE_BAD.getIntegerValue());
+            }
+
+        } else {
+            createReaction(employee_id, report_id, AttributeConst.RXN_TYPE_BAD.getIntegerValue());
+        }
+    }
+
+    public void createReaction(int employee_id, int report_id, int type) throws ServletException, IOException{
+        //セッションからログイン中の従業員情報を取得
+        EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+
+        //パラメータの値を元にリアクションのインスタンスを作成する
+        Reaction x = new Reaction(
+                null,
+                ev.getId(), //ログインしている従業員を、日報作成者として登録する
+                toNumber(getRequestParam(AttributeConst.REP_ID)),
+                type);
+
+        //日報情報登録
+        xService.create(x);
+
+        //詳細画面を再表示
+        show();
+    }
+
+    public void updateReaction(Reaction x, int type) throws ServletException, IOException{
+        //idを条件にリアクション情報を更新
+        xService.update(x, type);
+
+      //詳細画面を再表示
+        show();
+    }
+
+    public void destroyReaction(Reaction x) throws ServletException, IOException{
+        //idを条件にリアクション情報を削除
+        xService.destroy(x);
+
+        //詳細画面を再表示
+        show();
     }
 }
